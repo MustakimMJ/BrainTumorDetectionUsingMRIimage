@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Brain Tumor Detector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #10162a;
+      --elev: #121a33;
+      --text: #e6e9f2;
+      --muted: #98a2b3;
+      --primary: #7c8cff;
+      --primary-600: #6777ff;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --ring: rgba(124, 140, 255, 0.45);
+      --border: #1f2a44;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      /* Exact sizes for metrics */
+      --roc-w: 640px;
+      --roc-h: 480px;
+      --cm-w: 480px;
+      --cm-h: 480px;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f7fb;
+        --panel: #ffffff;
+        --elev: #ffffff;
+        --text: #0b1020;
+        --muted: #475467;
+        --primary: #4f46e5;
+        --primary-600: #4338ca;
+        --accent: #16a34a;
+        --danger: #dc2626;
+        --ring: rgba(79,70,229,.25);
+        --border: #e5e7eb;
+        --shadow: 0 10px 25px rgba(0,0,0,.06);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(124,140,255,.15), transparent 60%),
+                  radial-gradient(800px 500px at 0% 0%, rgba(34,197,94,.10), transparent 50%),
+                  var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      padding: 48px 24px 24px;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(124,140,255,.15), rgba(124,140,255,0) 60%);
+      border-bottom: 1px solid var(--border);
+    }
+    .title {
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+      margin: 0 0 8px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      margin: 0 auto;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: clamp(14px, 1.5vw, 16px);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    @media (min-width: 980px) {
+      .grid { grid-template-columns: 1.1fr .9fr; }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .card-title { font-weight: 700; font-size: 18px; }
+    .hint { color: var(--muted); font-size: 14px; }
+
+    .dropzone {
+      position: relative;
+      border: 1.5px dashed var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 16px;
+      align-items: center;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .dropzone:hover { border-color: var(--primary); box-shadow: 0 0 0 6px var(--ring) inset; }
+    .dropzone.dragover { border-color: var(--primary); box-shadow: 0 0 0 8px var(--ring) inset; }
+
+    .preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      background: #0f1427;
+      display: none;
+    }
+
+    .dropcopy { font-size: 14px; }
+    /* Keep one-line on wider screens, wrap on small screens so text stays visible */
+    @media (min-width: 900px) { .dropcopy { white-space: nowrap; } }
+    .dropcopy b { color: var(--primary); }
+    .drop-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      appearance: none; border: none; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 14px;
+      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn.primary { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(79,70,229,.25); }
+    .btn.primary:hover { background: var(--primary-600); }
+    .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn.ghost:hover { color: var(--text); border-color: var(--primary); box-shadow: 0 0 0 4px var(--ring); }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+    .loading { display: none; align-items: center; gap: 10px; color: var(--muted); margin-top: 8px; }
+    .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.15); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .result { margin-top: 16px; display: none; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(34,197,94,.12); color: var(--accent); border: 1px solid rgba(34,197,94,.3); padding: 8px 12px; border-radius: 999px; font-weight: 700; }
+  .pill.tumor { background: rgba(239,68,68,.12); color: var(--danger); border: 1px solid rgba(239,68,68,.3); }
+  .pill.notumor { background: rgba(34,197,94,.12); color: var(--accent); border: 1px solid rgba(34,197,94,.3); }
+    .confidence {
+      margin-top: 12px;
+      background: rgba(124,140,255,.15);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .confidence-bar { height: 10px; width: 0%; background: linear-gradient(90deg, var(--primary), #22c55e); transition: width .5s ease; }
+    .confidence-text { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); padding: 6px 8px 0; }
+
+    .probs { margin-top: 14px; display: grid; gap: 10px; }
+    .prob-row { display: grid; grid-template-columns: 140px 1fr 56px; align-items: center; gap: 10px; font-size: 14px; }
+    .prob-label { color: var(--muted); }
+    .prob-bar { height: 8px; background: rgba(124,140,255,.15); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+    .prob-bar > span { display: block; height: 100%; background: var(--primary); width: 0%; transition: width .5s ease; }
+    .prob-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+
+    .metrics { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+    .metric-card { background: var(--elev); border: 1px solid var(--border); border-radius: 16px; padding: 14px; box-shadow: var(--shadow); }
+    .metric-card h3 { margin: 0 0 10px; font-size: 15px; color: var(--muted); font-weight: 700; }
+    .metric-card img { width: 100%; height: auto; max-width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; background: #0f1427; }
+    /* Enforce exact sizes for ROC and Confusion Matrix */
+    /* Show at intrinsic size on large screens, but scale down to fit container on small screens */
+    #rocImg, #cmImg { width: 100%; height: auto; max-width: 100%; object-fit: contain; }
+
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 28px 0; }
+
+    /* Small-screen adjustments to avoid overflow and nudge layout left */
+    @media (max-width: 640px) {
+      .container { padding: 12px; }
+      header { padding: 32px 12px 16px; text-align: left; }
+      .grid { gap: 18px; }
+      .dropzone { grid-template-columns: 1fr; }
+      .preview { width: 100%; height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1 class="title">Brain Tumor Detector</h1>
+      <p class="subtitle">Upload an MRI image (JPG/PNG). Our model predicts the tumor subtype or detects <b>No Tumor</b>. View evaluation metrics below.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <!-- Left: Upload + Result -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">Upload MRI Image</div>
+          <div class="hint">Drag & drop or click to browse</div>
+        </div>
+
+        <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Upload image dropzone">
+          <img id="preview" class="preview" alt="Preview" />
+          <div>
+            <div class="dropcopy"><b>Choose an image</b> to begin the analysis. <br>Accepted formats: JPG, PNG.</div>
+            <div class="drop-actions">
+              <button id="browseBtn" class="btn ghost">Browse</button>
+              <button id="clearBtn" class="btn ghost" disabled>Clear</button>
+            </div>
+            <input id="fileInput" type="file" accept="image/*" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="predictBtn" class="btn primary" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v18m9-9H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Predict
+          </button>
+          <div id="loading" class="loading">
+            <span class="spinner"></span>
+            Running inference…
+          </div>
+        </div>
+
+        <div id="resultArea" class="result">
+          <div id="resultPill" class="pill">Prediction: <span id="predLabel">—</span></div>
+          <div class="confidence">
+            <div class="confidence-text"><span>Confidence</span><span id="confText">0%</span></div>
+            <div class="confidence-bar" id="confBar"></div>
+          </div>
+          <div class="probs" id="probsList"></div>
+        </div>
+      </section>
+
+      <!-- Right: Metrics -->
+      <aside class="metrics">
+        <div class="metric-card">
+          <h3>ROC Curve</h3>
+          <img id="rocImg" src="/static/roc_curve.png" alt="ROC Curve" />
+        </div>
+        <div class="metric-card">
+          <h3>Confusion Matrix</h3>
+          <img id="cmImg" src="/static/confusion_matrix.png" alt="Confusion Matrix" />
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    &copy; Ittesaf & Tisha & Murad
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const browseBtn = document.getElementById('browseBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const dropzone = document.getElementById('dropzone');
+    const preview = document.getElementById('preview');
+    const predictBtn = document.getElementById('predictBtn');
+    const loading = document.getElementById('loading');
+    const resultArea = document.getElementById('resultArea');
+    const predLabel = document.getElementById('predLabel');
+    const confText = document.getElementById('confText');
+    const confBar = document.getElementById('confBar');
+    const probsList = document.getElementById('probsList');
+
+    let selectedFile = null;
+
+    function resetUI() {
+      selectedFile = null;
+      preview.src = '';
+      preview.style.display = 'none';
+      predictBtn.disabled = true;
+      clearBtn.disabled = true;
+      resultArea.style.display = 'none';
+      confBar.style.width = '0%';
+      confText.textContent = '0%';
+      probsList.innerHTML = '';
+    }
+
+    function setFile(file) {
+      if (!file) return;
+      selectedFile = file;
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.style.display = 'block';
+      predictBtn.disabled = false;
+      clearBtn.disabled = false;
+      resultArea.style.display = 'none';
+    }
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+    clearBtn.addEventListener('click', resetUI);
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      setFile(file);
+    });
+
+    // Drag & Drop behavior
+    ;['dragenter','dragover'].forEach(evt => dropzone.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation(); dropzone.classList.add('dragover');
+    }));
+    ;['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('dragover');
+    }));
+    dropzone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) setFile(file);
+    });
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+
+    predictBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      predictBtn.disabled = true;
+      loading.style.display = 'inline-flex';
+      resultArea.style.display = 'none';
+
+      const form = new FormData();
+      form.append('image', selectedFile);
+
+      try {
+        const res = await fetch('/predict', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Prediction failed');
+        } else {
+          // Fill result UI
+          resultArea.style.display = 'block';
+          predLabel.textContent = data.prediction;
+          // Set pill color based on prediction
+          const pill = document.getElementById('resultPill');
+          if (data.prediction && data.prediction.toLowerCase().includes('no tumor')) {
+            pill.classList.remove('tumor');
+            pill.classList.add('notumor');
+          } else {
+            pill.classList.remove('notumor');
+            pill.classList.add('tumor');
+          }
+          const confidence = Math.max(0, Math.min(100, Number(data.confidence) || 0));
+          confText.textContent = confidence + '%';
+          confBar.style.width = confidence + '%';
+
+          // Probabilities list with animated bars
+          const entries = Object.entries(data.all_probs || {});
+          entries.sort((a,b) => Number(b[1]) - Number(a[1]));
+          probsList.innerHTML = entries.map(([label, val]) => {
+            const pct = Math.max(0, Math.min(100, Number(val) || 0));
+            return `
+              <div class="prob-row">
+                <div class="prob-label">${label}</div>
+                <div class="prob-bar"><span style="width:${pct}%"></span></div>
+                <div class="prob-val">${pct}%</div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        alert('Server error: ' + err);
+      } finally {
+        predictBtn.disabled = false;
+        loading.style.display = 'none';
+      }
+    });
+
+    // Initialize
+    resetUI();
+  </script>
+
+</body>
+</html>
