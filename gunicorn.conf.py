@@ -7,13 +7,16 @@ threads = int(os.environ.get("GUNICORN_THREADS", "1"))
 timeout = int(os.environ.get("GUNICORN_TIMEOUT", "120"))
 graceful_timeout = int(os.environ.get("GUNICORN_GRACEFUL_TIMEOUT", "30"))
 keepalive = int(os.environ.get("GUNICORN_KEEPALIVE", "5"))
+
 worker_class = "sync"
 preload_app = True
+
 accesslog = "-"
 errorlog = "-"
 loglevel = os.environ.get("LOG_LEVEL", "info").lower()
-max_requests = int(os.environ.get("GUNICORN_MAX_REQUESTS", "0")) or None
-max_requests_jitter = int(os.environ.get("GUNICORN_MAX_REQUESTS_JITTER", "0")) or None
+
+max_requests = int(os.environ.get("GUNICORN_MAX_REQUESTS", "1000"))
+max_requests_jitter = int(os.environ.get("GUNICORN_MAX_REQUESTS_JITTER", "100"))
 
 if workers == 0:
     workers = max(1, multiprocessing.cpu_count() // 2)
