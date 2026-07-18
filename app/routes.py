@@ -3,7 +3,7 @@ import logging
 import os
 import time
 import traceback
-
+import numpy as np
 from flask import Blueprint, jsonify, render_template, request, send_from_directory
 import torch
 from PIL import Image
@@ -95,20 +95,26 @@ def predict():
         # -----------------------------
         # Preprocessing
         # -----------------------------
-        logger.info("Starting preprocessing...")
+        logger.info("Starting manual preprocessing...")
 
         t0 = time.time()
 
-        input_tensor = (
-            model_module.preprocess(image)
-            .unsqueeze(0)
-            .to(model_module.device)
-        )
+        image = image.resize((224, 224))
 
-        logger.info(
-            "Preprocessing completed in %.3f sec",
-            time.time() - t0
-        )
+        img = np.array(image).astype(np.float32)
+        img = img / 255.0
+
+        img[:, :, 0] = (img[:, :, 0] - 0.485) / 0.229
+        img[:, :, 1] = (img[:, :, 1] - 0.456) / 0.224
+        img[:, :, 2] = (img[:, :, 2] - 0.406) / 0.225
+
+        img = img.transpose((2, 0, 1))
+
+        input_tensor = torch.from_numpy(img).float()
+        input_tensor = input_tensor.unsqueeze(0)
+        input_tensor = input_tensor.to(model_module.device)
+
+        logger.info("Manual preprocessing completed in %.3f sec", time.time() - t0)
 
         logger.info("Input tensor shape: %s", tuple(input_tensor.shape))
         logger.info("Device: %s", model_module.device)
