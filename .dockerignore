@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local model artifacts (downloaded at runtime from Hugging Face)
+models/
+*.pth
+*.pt
+*.onnx
+brain_tumor_model.pth
+
+# User uploads (runtime data)
+uploads/
+
+# IDE and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Notebooks and local experiments
+*.ipynb
+.ipynb_checkpoints/
+
+# Documentation not needed in the image
+README.md
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Logs
+*.log

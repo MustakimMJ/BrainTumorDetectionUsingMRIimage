@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Model weights (download from Hugging Face or keep locally untracked)
+models/
+*.pth
+*.pt
+*.onnx
+brain_tumor_model.pth
+
+# Runtime uploads
+uploads/
+
+# IDE and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
