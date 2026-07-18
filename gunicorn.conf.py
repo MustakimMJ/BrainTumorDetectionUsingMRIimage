@@ -9,7 +9,7 @@ graceful_timeout = int(os.environ.get("GUNICORN_GRACEFUL_TIMEOUT", "30"))
 keepalive = int(os.environ.get("GUNICORN_KEEPALIVE", "5"))
 
 worker_class = "sync"
-preload_app = True
+preload_app = False
 
 accesslog = "-"
 errorlog = "-"
